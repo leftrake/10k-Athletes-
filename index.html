@@ -66,7 +66,7 @@
         <h2>Welcome to the 10k Athletes Challenge!</h2>
         <p>How to Play:</p>
         <ul style="text-align: left; display: inline-block;">
-            <li>Enter the names of as many athletes as you can think of.</li>
+            <li>Enter the names of as many professional athletes as you can think of.</li>
             <li>Names must be spelled <b>exactly correct</b>, but the game is <b>case-insensitive</b>.</li>
             <li>Correct punctuation and diacritical marks are required:
                 <ul>
@@ -74,22 +74,22 @@
                     <li><b>Nikola Jokić</b> will work, but <b>Nikola Jokic</b> will not.</li>
                 </ul>
             </li>
-            <li>Only <b>current athletes</b> from mainstream sports are valid.</li>
+            <li>Only <b>current professional athletes</b> from mainstream sports are valid.</li>
             <li>Each correct name earns points, tracked on the leaderboard.</li>
         </ul>
         <button onclick="startGame()">Start Game</button>
     </div>
 
     <div id="game-section">
-        <p>Enter an athlete's name below:</p>
-        <input type="text" id="athlete-name" placeholder="Enter player name..." />
+        <p>Enter a professional athlete's name below:</p>
+        <input type="text" id="athlete-name" placeholder="Enter professional athlete name..." />
         <button onclick="submitAthlete()">Submit</button>
         <button onclick="resetUserData()">Reset</button>
         <p id="response"></p>
-        <h2>Total Named Athletes: <span id="athlete-count">0</span></h2>
+        <h2>Total Named Professional Athletes: <span id="athlete-count">0</span></h2>
         <h2>Your Score: <span id="athlete-score">0</span> Points</h2>
         <div id="named-athletes">
-            <h3>Named Athletes:</h3>
+            <h3>Named Professional Athletes:</h3>
             <ul id="athletes-list"></ul>
         </div>
         <button onclick="showLeaderboard()">Show Leaderboard</button>
@@ -160,7 +160,7 @@
             }
         }
 
-        // Submit athlete name and validate
+        // Submit professional athlete name and validate
         async function submitAthlete() {
             const athleteName = document.getElementById("athlete-name").value.trim();
             const responseElement = document.getElementById("response");
@@ -180,7 +180,7 @@
             const matchedPlayer = await fetchPlayer(athleteName);
 
             if (matchedPlayer) {
-                responseElement.textContent = `${matchedPlayer} is a valid athlete!`;
+                responseElement.textContent = `${matchedPlayer} is a valid professional athlete!`;
                 responseElement.style.color = "green";
 
                 namedAthletes.add(matchedPlayer.toLowerCase());
