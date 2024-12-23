@@ -46,9 +46,8 @@
             padding: 10px;
             margin-bottom: 20px;
         }
-        #leaderboard-section {
+        #leaderboard-section, #info-section, #game-section {
             display: none;
-            margin-top: 30px;
         }
         #leaderboard-list {
             margin-left: 20px;
@@ -62,7 +61,26 @@
         <input type="text" id="player-name" placeholder="Enter your name" />
         <button onclick="login()">Log In</button>
     </div>
-    <div id="game-section" style="display: none;">
+
+    <div id="info-section">
+        <h2>Welcome to the 10k Athletes Challenge!</h2>
+        <p>How to Play:</p>
+        <ul style="text-align: left; display: inline-block;">
+            <li>Enter the names of as many athletes as you can think of.</li>
+            <li>Names must be spelled <b>exactly correct</b>, but the game is <b>case-insensitive</b>.</li>
+            <li>Correct punctuation and diacritical marks are required:
+                <ul>
+                    <li>For example, <b>T.J. McConnell</b> will work, but <b>TJ McConnell</b> will not.</li>
+                    <li><b>Nikola Jokić</b> will work, but <b>Nikola Jokic</b> will not.</li>
+                </ul>
+            </li>
+            <li>Only <b>current athletes</b> from mainstream sports are valid.</li>
+            <li>Each correct name earns points, tracked on the leaderboard.</li>
+        </ul>
+        <button onclick="startGame()">Start Game</button>
+    </div>
+
+    <div id="game-section">
         <p>Enter an athlete's name below:</p>
         <input type="text" id="athlete-name" placeholder="Enter player name..." />
         <button onclick="submitAthlete()">Submit</button>
@@ -84,13 +102,12 @@
     </div>
 
     <script>
-        const apiKey = '3'; // Your API key from The Sports DB
+        const apiKey = '3'; 
         let namedAthletes = new Set();
         let score = 0;
         let currentPlayer = '';
         let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
 
-        // Log in the player and start the game
         function login() {
             const playerNameInput = document.getElementById("player-name").value.trim();
 
@@ -101,7 +118,6 @@
 
             currentPlayer = playerNameInput;
 
-            // Restore player data if it exists
             const existingPlayer = leaderboard.find(player => player.name === currentPlayer);
             if (existingPlayer) {
                 score = existingPlayer.score;
@@ -110,69 +126,17 @@
             }
 
             document.getElementById("login-section").style.display = "none";
+            document.getElementById("info-section").style.display = "block";
+
+            alert(`Welcome, ${currentPlayer}!`);
+        }
+
+        function startGame() {
+            document.getElementById("info-section").style.display = "none";
             document.getElementById("game-section").style.display = "block";
 
-            alert(`Welcome back, ${currentPlayer}!`);
             displayLeaderboard();
             updateScoreUI();
-        }
-
-        // Reset the current user's data
-        function resetUserData() {
-            namedAthletes.clear();
-            score = 0;
-            updateScoreUI();
-            updateNamedAthletesUI();
-
-            // Update leaderboard for current player
-            const existingPlayer = leaderboard.find(player => player.name === currentPlayer);
-            if (existingPlayer) {
-                existingPlayer.score = 0;
-                existingPlayer.namedAthletes = [];
-            }
-
-            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
-            displayLeaderboard();
-
-            alert(`Your data has been reset, ${currentPlayer}!`);
-        }
-
-        // Updates the leaderboard and stores it in localStorage
-        function updateLeaderboard() {
-            const existingPlayer = leaderboard.find(player => player.name === currentPlayer);
-            if (existingPlayer) {
-                existingPlayer.score = score;
-                existingPlayer.namedAthletes = Array.from(namedAthletes);
-            } else {
-                leaderboard.push({ name: currentPlayer, score, namedAthletes: Array.from(namedAthletes) });
-            }
-
-            leaderboard.sort((a, b) => b.score - a.score);
-            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
-            displayLeaderboard();
-        }
-
-        // Displays the leaderboard in the UI
-        function displayLeaderboard() {
-            const leaderboardList = document.getElementById('leaderboard-list');
-            leaderboardList.innerHTML = '';
-            leaderboard.forEach(player => {
-                const listItem = document.createElement('li');
-                listItem.textContent = `${player.name} - ${player.score} Points`;
-                leaderboardList.appendChild(listItem);
-            });
-        }
-
-        // Show leaderboard
-        function showLeaderboard() {
-            document.getElementById("game-section").style.display = "none";
-            document.getElementById("leaderboard-section").style.display = "block";
-        }
-
-        // Hide leaderboard
-        function hideLeaderboard() {
-            document.getElementById("leaderboard-section").style.display = "none";
-            document.getElementById("game-section").style.display = "block";
         }
 
         // Fetch player data from The Sports DB
@@ -182,9 +146,13 @@
                 const data = await response.json();
 
                 if (data && data.player) {
-                    return data.player[0].strPlayer; // Return the first matching player's name
+                    // Find exact match (case-insensitive) in the list of results
+                    const exactMatch = data.player.find(player =>
+                        player.strPlayer.toLowerCase() === playerName.toLowerCase()
+                    );
+                    return exactMatch ? exactMatch.strPlayer : null;
                 } else {
-                    return null; // No matching player found
+                    return null;
                 }
             } catch (error) {
                 console.error('Error fetching player data:', error);
@@ -203,35 +171,22 @@
                 return;
             }
 
-            // Normalize input for case-insensitive comparison
-            const normalizedInput = athleteName.toLowerCase();
-
-            // Check if the name has already been entered
-            if (Array.from(namedAthletes).some(name => name.toLowerCase() === normalizedInput)) {
+            if (namedAthletes.has(athleteName.toLowerCase())) {
                 responseElement.textContent = `${athleteName} has already been named!`;
                 responseElement.style.color = "blue";
                 return;
             }
 
-            // Fetch and validate the player
             const matchedPlayer = await fetchPlayer(athleteName);
 
             if (matchedPlayer) {
-                const normalizedPlayerName = matchedPlayer.toLowerCase();
+                responseElement.textContent = `${matchedPlayer} is a valid athlete!`;
+                responseElement.style.color = "green";
 
-                // Validate exact match for the full name
-                if (normalizedInput === normalizedPlayerName) {
-                    responseElement.textContent = `${matchedPlayer} is a valid athlete!`;
-                    responseElement.style.color = "green";
-
-                    namedAthletes.add(matchedPlayer); // Use the original capitalization for storage
-                    addNamedAthleteToUI(matchedPlayer);
-                    score += 10;
-                    updateScoreUI();
-                } else {
-                    responseElement.textContent = `${athleteName} does not match the exact full name.`;
-                    responseElement.style.color = "orange";
-                }
+                namedAthletes.add(matchedPlayer.toLowerCase());
+                addNamedAthleteToUI(matchedPlayer);
+                score += 10;
+                updateScoreUI();
             } else {
                 responseElement.textContent = `${athleteName} is not in the database.`;
                 responseElement.style.color = "orange";
@@ -241,7 +196,46 @@
             updateLeaderboard();
         }
 
-        // Add named athlete to the UI
+        function resetUserData() {
+            namedAthletes.clear();
+            score = 0;
+            updateScoreUI();
+            updateNamedAthletesUI();
+
+            const existingPlayer = leaderboard.find(player => player.name === currentPlayer);
+            if (existingPlayer) {
+                existingPlayer.score = 0;
+                existingPlayer.namedAthletes = [];
+            }
+
+            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+            displayLeaderboard();
+        }
+
+        function updateLeaderboard() {
+            const existingPlayer = leaderboard.find(player => player.name === currentPlayer);
+            if (existingPlayer) {
+                existingPlayer.score = score;
+                existingPlayer.namedAthletes = Array.from(namedAthletes);
+            } else {
+                leaderboard.push({ name: currentPlayer, score, namedAthletes: Array.from(namedAthletes) });
+            }
+
+            leaderboard.sort((a, b) => b.score - a.score);
+            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+            displayLeaderboard();
+        }
+
+        function displayLeaderboard() {
+            const leaderboardList = document.getElementById('leaderboard-list');
+            leaderboardList.innerHTML = '';
+            leaderboard.forEach(player => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${player.name} - ${player.score} Points`;
+                leaderboardList.appendChild(listItem);
+            });
+        }
+
         function addNamedAthleteToUI(athlete) {
             const athletesListElement = document.getElementById("athletes-list");
             const listItem = document.createElement("li");
@@ -250,7 +244,11 @@
             document.getElementById("athlete-count").textContent = namedAthletes.size;
         }
 
-        // Update named athletes in UI
+        function updateScoreUI() {
+            document.getElementById("athlete-score").textContent = score;
+            document.getElementById("athlete-count").textContent = namedAthletes.size;
+        }
+
         function updateNamedAthletesUI() {
             const athletesListElement = document.getElementById("athletes-list");
             athletesListElement.innerHTML = '';
@@ -259,18 +257,15 @@
             });
         }
 
-        // Update score and count in UI
-        function updateScoreUI() {
-            document.getElementById("athlete-score").textContent = score;
-            document.getElementById("athlete-count").textContent = namedAthletes.size;
+        function showLeaderboard() {
+            document.getElementById("game-section").style.display = "none";
+            document.getElementById("leaderboard-section").style.display = "block";
         }
 
-        // Listen for Enter key press in athlete-name input field
-        document.getElementById("athlete-name").addEventListener("keydown", function(event) {
-            if (event.key === "Enter") {
-                submitAthlete();
-            }
-        });
+        function hideLeaderboard() {
+            document.getElementById("leaderboard-section").style.display = "none";
+            document.getElementById("game-section").style.display = "block";
+        }
 
         displayLeaderboard();
     </script>
