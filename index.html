@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10k Athletes Challenge</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        input {
+            padding: 10px;
+            width: 300px;
+            margin: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #response {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        #named-athletes, #leaderboard {
+            margin-top: 20px;
+            text-align: left;
+            display: inline-block;
+            font-size: 16px;
+            max-height: 200px;
+            overflow-y: auto;
+            width: 90%;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        #leaderboard-section {
+            display: none;
+            margin-top: 30px;
+        }
+        #leaderboard-list {
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>10k Athletes Challenge</h1>
+    <div id="login-section">
+        <p>Enter your name to start:</p>
+        <input type="text" id="player-name" placeholder="Enter your name" />
+        <button onclick="login()">Log In</button>
+    </div>
+    <div id="game-section" style="display: none;">
+        <p>Enter an athlete's name below:</p>
+        <input type="text" id="athlete-name" placeholder="Enter player name..." />
+        <button onclick="submitAthlete()">Submit</button>
+        <button onclick="resetUserData()">Reset</button>
+        <p id="response"></p>
+        <h2>Total Named Athletes: <span id="athlete-count">0</span></h2>
+        <h2>Your Score: <span id="athlete-score">0</span> Points</h2>
+        <div id="named-athletes">
+            <h3>Named Athletes:</h3>
+            <ul id="athletes-list"></ul>
+        </div>
+        <button onclick="showLeaderboard()">Show Leaderboard</button>
+    </div>
+
+    <div id="leaderboard-section">
+        <h3>Leaderboard:</h3>
+        <ol id="leaderboard-list"></ol>
+        <button onclick="hideLeaderboard()">Close Leaderboard</button>
+    </div>
+
+    <script>
+        const apiKey = '3'; // Your API key from The Sports DB
+        let namedAthletes = new Set();
+        let score = 0;
+        let currentPlayer = '';
+        let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+
+        // Log in the player and start the game
+        function login() {
+            const playerNameInput = document.getElementById("player-name").value.trim();
+
+            if (playerNameInput === "") {
+                alert("Please enter your name to log in!");
+                return;
+            }
+
+            currentPlayer = playerNameInput;
+
+            // Restore player data if it exists
+            const existingPlayer = leaderboard.find(player => player.name === currentPlayer);
+            if (existingPlayer) {
+                score = existingPlayer.score;
+                namedAthletes = new Set(existingPlayer.namedAthletes || []);
+                updateNamedAthletesUI();
+            }
+
+            document.getElementById("login-section").style.display = "none";
+            document.getElementById("game-section").style.display = "block";
+
+            alert(`Welcome back, ${currentPlayer}!`);
+            displayLeaderboard();
+            updateScoreUI();
+        }
+
+        // Reset the current user's data
+        function resetUserData() {
+            namedAthletes.clear();
+            score = 0;
+            updateScoreUI();
+            updateNamedAthletesUI();
+
+            // Update leaderboard for current player
+            const existingPlayer = leaderboard.find(player => player.name === currentPlayer);
+            if (existingPlayer) {
+                existingPlayer.score = 0;
+                existingPlayer.namedAthletes = [];
+            }
+
+            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+            displayLeaderboard();
+
+            alert(`Your data has been reset, ${currentPlayer}!`);
+        }
+
+        // Updates the leaderboard and stores it in localStorage
+        function updateLeaderboard() {
+            const existingPlayer = leaderboard.find(player => player.name === currentPlayer);
+            if (existingPlayer) {
+                existingPlayer.score = score;
+                existingPlayer.namedAthletes = Array.from(namedAthletes);
+            } else {
+                leaderboard.push({ name: currentPlayer, score, namedAthletes: Array.from(namedAthletes) });
+            }
+
+            leaderboard.sort((a, b) => b.score - a.score);
+            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+            displayLeaderboard();
+        }
+
+        // Displays the leaderboard in the UI
+        function displayLeaderboard() {
+            const leaderboardList = document.getElementById('leaderboard-list');
+            leaderboardList.innerHTML = '';
+            leaderboard.forEach(player => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${player.name} - ${player.score} Points`;
+                leaderboardList.appendChild(listItem);
+            });
+        }
+
+        // Show leaderboard
+        function showLeaderboard() {
+            document.getElementById("game-section").style.display = "none";
+            document.getElementById("leaderboard-section").style.display = "block";
+        }
+
+        // Hide leaderboard
+        function hideLeaderboard() {
+            document.getElementById("leaderboard-section").style.display = "none";
+            document.getElementById("game-section").style.display = "block";
+        }
+
+        // Fetch player data from The Sports DB
+        async function fetchPlayer(playerName) {
+            try {
+                const response = await fetch(`https://www.thesportsdb.com/api/v1/json/${apiKey}/searchplayers.php?p=${playerName}`);
+                const data = await response.json();
+
+                if (data && data.player) {
+                    return data.player[0].strPlayer; // Return the first matching player's name
+                } else {
+                    return null; // No matching player found
+                }
+            } catch (error) {
+                console.error('Error fetching player data:', error);
+                return null;
+            }
+        }
+
+        // Submit athlete name and validate
+        async function submitAthlete() {
+            const athleteName = document.getElementById("athlete-name").value.trim();
+            const responseElement = document.getElementById("response");
+
+            if (athleteName === "") {
+                responseElement.textContent = "Please enter a name!";
+                responseElement.style.color = "red";
+                return;
+            }
+
+            // Normalize input for case-insensitive comparison
+            const normalizedInput = athleteName.toLowerCase();
+
+            // Check if the name has already been entered
+            if (Array.from(namedAthletes).some(name => name.toLowerCase() === normalizedInput)) {
+                responseElement.textContent = `${athleteName} has already been named!`;
+                responseElement.style.color = "blue";
+                return;
+            }
+
+            // Fetch and validate the player
+            const matchedPlayer = await fetchPlayer(athleteName);
+
+            if (matchedPlayer) {
+                const normalizedPlayerName = matchedPlayer.toLowerCase();
+
+                // Validate exact match for the full name
+                if (normalizedInput === normalizedPlayerName) {
+                    responseElement.textContent = `${matchedPlayer} is a valid athlete!`;
+                    responseElement.style.color = "green";
+
+                    namedAthletes.add(matchedPlayer); // Use the original capitalization for storage
+                    addNamedAthleteToUI(matchedPlayer);
+                    score += 10;
+                    updateScoreUI();
+                } else {
+                    responseElement.textContent = `${athleteName} does not match the exact full name.`;
+                    responseElement.style.color = "orange";
+                }
+            } else {
+                responseElement.textContent = `${athleteName} is not in the database.`;
+                responseElement.style.color = "orange";
+            }
+
+            document.getElementById("athlete-name").value = "";
+            updateLeaderboard();
+        }
+
+        // Add named athlete to the UI
+        function addNamedAthleteToUI(athlete) {
+            const athletesListElement = document.getElementById("athletes-list");
+            const listItem = document.createElement("li");
+            listItem.textContent = athlete;
+            athletesListElement.appendChild(listItem);
+            document.getElementById("athlete-count").textContent = namedAthletes.size;
+        }
+
+        // Update named athletes in UI
+        function updateNamedAthletesUI() {
+            const athletesListElement = document.getElementById("athletes-list");
+            athletesListElement.innerHTML = '';
+            namedAthletes.forEach(athlete => {
+                addNamedAthleteToUI(athlete);
+            });
+        }
+
+        // Update score and count in UI
+        function updateScoreUI() {
+            document.getElementById("athlete-score").textContent = score;
+            document.getElementById("athlete-count").textContent = namedAthletes.size;
+        }
+
+        // Listen for Enter key press in athlete-name input field
+        document.getElementById("athlete-name").addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                submitAthlete();
+            }
+        });
+
+        displayLeaderboard();
+    </script>
+</body>
+</html>
