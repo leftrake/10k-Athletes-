@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+=<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -37,14 +37,30 @@
             margin-top: 20px;
             font-weight: bold;
         }
-        ul {
+        ul, .instructions {
             text-align: left;
             display: inline-block;
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #ccc;
-            padding: 10px;
-            width: 90%;
+            max-width: 500px;
+        }
+        h2 {
+            color: #0056b3;
+        }
+        .icon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        .highlight {
+            color: #007BFF;
+            font-weight: bold;
+        }
+        .example-item {
+            color: #007BFF;
+        }
+        .wrong-example {
+            color: #FF5733;
+        }
+        .instruction-step {
+            margin-bottom: 15px;
         }
     </style>
 </head>
@@ -61,21 +77,39 @@
 
     <div id="info-section">
         <h2>Welcome to the 10k Athletes Challenge!</h2>
-        <p>How to Play:</p>
-        <ul>
-            <li>Enter the names of as many <strong>professional athletes</strong> as you can think of.</li>
-            <li><strong>Names must be spelled exactly correct</strong>, but the game is case-insensitive.</li>
-            <li>
-                Correct punctuation and diacritical marks are required:
-                <ul>
-                    <li>Example: <strong>T.J. McConnell</strong> will work, but <strong>TJ McConnell</strong> will not.</li>
-                    <li>Example: <strong>Nikola Jokić</strong> will work, but <strong>Nikola Jokic</strong> will not.</li>
-                </ul>
-            </li>
-            <li>Only <strong>current professional athletes</strong> from mainstream sports are valid.</li>
-            <li>Each correct name earns 10 points, which are tracked on the leaderboard.</li>
-        </ul>
-        <button id="start-game-button">Start Game</button>
+        <p><em>Think you're the ultimate sports fan? Prove it by naming as many athletes as you can!</em></p>
+        <div class="instructions">
+            <h3>How to Play:</h3>
+            <div class="instruction-step">
+                <span class="icon">🏀</span> <span class="highlight">Step 1:</span> Think of a <b>current professional athlete</b>.
+            </div>
+            <div class="instruction-step">
+                <span class="icon">⚽</span> <span class="highlight">Step 2:</span> Enter their name <b>exactly</b>, including punctuation and accents:
+                <div>
+                    <span class="highlight">Correct:</span> <span class="example-item">T.J. McConnell</span><br>
+                    <span class="highlight">Incorrect:</span> <span class="wrong-example">TJ McConnell</span>
+                </div>
+                <div>
+                    <span class="highlight">Correct:</span> <span class="example-item">Nikola Jokić</span><br>
+                    <span class="highlight">Incorrect:</span> <span class="wrong-example">Nikola Jokic</span>
+                </div>
+            </div>
+            <div class="instruction-step">
+                <span class="icon">🏈</span> <span class="highlight">Step 3:</span> Earn points:
+                <div>
+                    Each correct name earns <span class="highlight">10 points</span>, tracked on the <span class="highlight">Leaderboard</span>.
+                </div>
+            </div>
+            <div class="instruction-step">
+                <span class="icon">🎯</span> <span class="highlight">Clarifications:</span>
+                <div>
+                    Only <span class="highlight">current professional athletes</span> are valid.<br>
+                    <span class="highlight">Accuracy is key</span>: ensure punctuation and accents (e.g., "Jokić").
+                </div>
+            </div>
+        </div>
+        <button id="start-game-button">Start Challenge</button>
+        <button id="back-to-login-button">Back to Login</button>
     </div>
 
     <div id="game-section">
@@ -156,10 +190,10 @@
 
                 if (snapshot.exists()) {
                     const data = snapshot.val();
-                    score = data.score || 0; // Retrieve and keep the player's score
+                    score = data.score || 0;
                     namedAthletes = new Set(data.namedAthletes || []);
                     updateNamedAthletesUI();
-                    document.getElementById("score").textContent = score; // Update score in the UI
+                    document.getElementById("score").textContent = score;
                     alert(`Welcome back, ${email}!`);
                 } else {
                     alert(`No data found for ${email}. Starting a new game.`);
@@ -181,6 +215,11 @@
         document.getElementById("back-to-info-button").addEventListener("click", () => {
             document.getElementById("game-section").style.display = "none";
             document.getElementById("info-section").style.display = "block";
+        });
+
+        document.getElementById("back-to-login-button").addEventListener("click", () => {
+            document.getElementById("info-section").style.display = "none";
+            document.getElementById("login-section").style.display = "block";
         });
 
         document.getElementById("submit-button").addEventListener("click", async () => {
@@ -209,7 +248,7 @@
                         namedAthletes.add(exactMatch.strPlayer.toLowerCase());
                         addNamedAthleteToUI(exactMatch.strPlayer);
 
-                        score += 10; // Increment score by 10 points
+                        score += 10;
                         document.getElementById("score").textContent = score;
 
                         const playerRef = ref(db, `players/${currentPlayer}`);
@@ -217,6 +256,7 @@
 
                         responseElement.textContent = `${exactMatch.strPlayer} is valid!`;
                         responseElement.style.color = "green";
+                        document.getElementById("athlete-name").value = ""; // Clear input
                     } else {
                         responseElement.textContent = `${athleteName} is not valid.`;
                         responseElement.style.color = "orange";
