@@ -167,6 +167,7 @@
         let score = 0;
         let namedAthletes = new Set();
 
+        // Google Login
         document.getElementById("google-login-button").addEventListener("click", async () => {
             const provider = new GoogleAuthProvider();
             try {
@@ -193,7 +194,84 @@
             }
         });
 
-        // Other functions for register, login, forgot password, etc. remain as in the original code above.
+        // Register
+        document.getElementById("register-button").addEventListener("click", async () => {
+            const email = document.getElementById("player-email").value.trim();
+            const password = document.getElementById("player-password").value.trim();
+            if (!email || !password) {
+                alert("Please enter both email and password.");
+                return;
+            }
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                currentPlayer = userCredential.user.uid;
+                const playerRef = ref(db, `players/${currentPlayer}`);
+                await set(playerRef, { score: 0, namedAthletes: [] });
+                alert("Registration successful!");
+                document.getElementById("login-section").style.display = "none";
+                document.getElementById("info-section").style.display = "block";
+            } catch (error) {
+                console.error("Registration error:", error);
+                alert("Registration failed.");
+            }
+        });
+
+        // Log In
+        document.getElementById("login-button").addEventListener("click", async () => {
+            const email = document.getElementById("player-email").value.trim();
+            const password = document.getElementById("player-password").value.trim();
+            if (!email || !password) {
+                alert("Please enter both email and password.");
+                return;
+            }
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                currentPlayer = userCredential.user.uid;
+                const playerRef = ref(db, `players/${currentPlayer}`);
+                const snapshot = await get(playerRef);
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    score = data.score || 0;
+                    namedAthletes = new Set(data.namedAthletes || []);
+                    document.getElementById("score").textContent = score;
+                    updateNamedAthletesUI();
+                }
+                alert("Login successful!");
+                document.getElementById("login-section").style.display = "none";
+                document.getElementById("info-section").style.display = "block";
+            } catch (error) {
+                console.error("Login error:", error);
+                alert("Login failed.");
+            }
+        });
+
+        // Forgot Password
+        document.getElementById("forgot-password-button").addEventListener("click", async () => {
+            const email = document.getElementById("player-email").value.trim();
+            if (!email) {
+                alert("Please enter your email to reset your password.");
+                return;
+            }
+            try {
+                await sendPasswordResetEmail(auth, email);
+                alert(`Password reset email sent to ${email}. Check your inbox.`);
+            } catch (error) {
+                console.error("Error sending reset email:", error);
+                alert("Failed to send reset email. Please try again.");
+            }
+        });
+
+        // Other game-related logic remains unchanged
+
+        function updateNamedAthletesUI() {
+            const list = document.getElementById("named-athletes");
+            list.innerHTML = "";
+            namedAthletes.forEach(athlete => {
+                const listItem = document.createElement("li");
+                listItem.textContent = athlete;
+                list.appendChild(listItem);
+            });
+        }
     </script>
 </body>
 </html>
