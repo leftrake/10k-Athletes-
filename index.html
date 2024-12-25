@@ -71,6 +71,7 @@
     <!-- Login Section -->
     <div id="login-section">
         <p>Log in or register to start:</p>
+        <input type="text" id="player-username" placeholder="Enter your username" />
         <input type="email" id="player-email" placeholder="Enter your email" />
         <input type="password" id="player-password" placeholder="Enter your password" />
         <button id="register-button">Register</button>
@@ -80,8 +81,9 @@
 
         <!-- Email and Password Guidelines -->
         <div class="guidelines">
-            <h3>Email and Password Guidelines:</h3>
+            <h3>Username, Email, and Password Guidelines:</h3>
             <ul>
+                <li><strong>Username:</strong> Must be unique (e.g., sportsfan123).</li>
                 <li><strong>Email:</strong> Must be a valid email format (e.g., example@example.com).</li>
                 <li><strong>Password:</strong> Must be at least 6 characters long.</li>
                 <li>Passwords are case-sensitive (e.g., "Password123" ≠ "password123").</li>
@@ -143,35 +145,20 @@
         let score = 0;
         let namedAthletes = new Set();
 
-        // Forgot Password
-        document.getElementById("forgot-password-button").addEventListener("click", async () => {
-            const email = document.getElementById("player-email").value.trim();
-            if (!email) {
-                alert("Please enter your email to reset your password.");
-                return;
-            }
-            try {
-                await sendPasswordResetEmail(auth, email);
-                alert(`Password reset email sent to ${email}. Check your inbox.`);
-            } catch (error) {
-                console.error("Error sending reset email:", error);
-                alert("Failed to send reset email. Please try again.");
-            }
-        });
-
-        // Register
         document.getElementById("register-button").addEventListener("click", async () => {
+            const username = document.getElementById("player-username").value.trim();
             const email = document.getElementById("player-email").value.trim();
             const password = document.getElementById("player-password").value.trim();
-            if (!email || !password) {
-                alert("Please enter both email and password.");
+
+            if (!username || !email || !password) {
+                alert("Please enter a username, email, and password.");
                 return;
             }
+
             try {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 currentPlayer = userCredential.user.uid;
-                const playerRef = ref(db, `players/${currentPlayer}`);
-                await set(playerRef, { score: 0, namedAthletes: [] });
+                await set(ref(db, `players/${currentPlayer}`), { username, email, score: 0, namedAthletes: [] });
                 alert("Registration successful!");
                 document.getElementById("login-section").style.display = "none";
                 document.getElementById("info-section").style.display = "block";
@@ -181,25 +168,23 @@
             }
         });
 
-        // Log In
         document.getElementById("login-button").addEventListener("click", async () => {
             const email = document.getElementById("player-email").value.trim();
             const password = document.getElementById("player-password").value.trim();
+
             if (!email || !password) {
                 alert("Please enter both email and password.");
                 return;
             }
+
             try {
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 currentPlayer = userCredential.user.uid;
-                const playerRef = ref(db, `players/${currentPlayer}`);
-                const snapshot = await get(playerRef);
+                const snapshot = await get(ref(db, `players/${currentPlayer}`));
                 if (snapshot.exists()) {
                     const data = snapshot.val();
                     score = data.score || 0;
                     namedAthletes = new Set(data.namedAthletes || []);
-                    document.getElementById("score").textContent = score;
-                    updateNamedAthletesUI();
                 }
                 alert("Login successful!");
                 document.getElementById("login-section").style.display = "none";
@@ -210,7 +195,6 @@
             }
         });
 
-        // Google Login
         document.getElementById("google-login-button").addEventListener("click", async () => {
             const provider = new GoogleAuthProvider();
             try {
@@ -220,10 +204,6 @@
                 const snapshot = await get(playerRef);
                 if (!snapshot.exists()) {
                     await set(playerRef, { score: 0, namedAthletes: [] });
-                } else {
-                    const data = snapshot.val();
-                    score = data.score || 0;
-                    namedAthletes = new Set(data.namedAthletes || []);
                 }
                 alert("Google login successful!");
                 document.getElementById("login-section").style.display = "none";
@@ -234,25 +214,37 @@
             }
         });
 
-        // Start Game
+        document.getElementById("forgot-password-button").addEventListener("click", async () => {
+            const email = document.getElementById("player-email").value.trim();
+            if (!email) {
+                alert("Please enter your email.");
+                return;
+            }
+
+            try {
+                await sendPasswordResetEmail(auth, email);
+                alert("Password reset email sent.");
+            } catch (error) {
+                console.error("Password reset error:", error);
+                alert("Failed to send password reset email.");
+            }
+        });
+
         document.getElementById("start-game-button").addEventListener("click", () => {
             document.getElementById("info-section").style.display = "none";
             document.getElementById("game-section").style.display = "block";
         });
 
-        // Back to Login
         document.getElementById("back-to-login-button").addEventListener("click", () => {
             document.getElementById("info-section").style.display = "none";
             document.getElementById("login-section").style.display = "block";
         });
 
-        // Back to Info
         document.getElementById("back-to-info-button").addEventListener("click", () => {
             document.getElementById("game-section").style.display = "none";
             document.getElementById("info-section").style.display = "block";
         });
 
-        // Submit Athlete
         document.getElementById("submit-button").addEventListener("click", async () => {
             const athleteName = document.getElementById("athlete-name").value.trim();
             const responseElement = document.getElementById("response");
@@ -302,12 +294,11 @@
             }
         });
 
-        // Reset Game
         document.getElementById("reset-button").addEventListener("click", () => {
             namedAthletes.clear();
             score = 0;
             document.getElementById("score").textContent = score;
-            updateNamedAthletesUI();
+            document.getElementById("named-athletes").innerHTML = "";
             document.getElementById("response").textContent = "Game reset!";
         });
 
@@ -316,12 +307,6 @@
             const listItem = document.createElement("li");
             listItem.textContent = name;
             list.appendChild(listItem);
-        }
-
-        function updateNamedAthletesUI() {
-            const list = document.getElementById("named-athletes");
-            list.innerHTML = "";
-            namedAthletes.forEach(athlete => addNamedAthleteToUI(athlete));
         }
     </script>
 </body>
