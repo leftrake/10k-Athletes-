@@ -5,116 +5,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>10k Athletes Challenge</title>
     <style>
-        /* General Styling */
         body {
-            font-family: 'Poppins', Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(to bottom, #007BFF, #004b99);
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            font-family: Arial, sans-serif;
             text-align: center;
-            overflow: hidden;
-        }
-
-        /* Content Container */
-        .container {
-            max-width: 600px;
             padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.3);
+            background-color: #f4f4f9;
+            color: #333;
         }
-
-        /* Title */
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: #ffeb3b;
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
-        }
-
-        /* Paragraph Text */
-        p {
-            font-size: 1.2rem;
-            margin-bottom: 30px;
-            line-height: 1.6;
-            color: #e0e0e0;
-        }
-
-        /* Buttons */
-        .button {
-            padding: 12px 25px;
+        input {
+            padding: 10px;
+            width: 300px;
             margin: 10px;
-            font-size: 1rem;
-            font-weight: bold;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007BFF;
             color: white;
-            background: linear-gradient(to right, #007BFF, #004b99);
             border: none;
-            border-radius: 30px;
+            border-radius: 5px;
             cursor: pointer;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s ease;
         }
-
-        .button:hover {
-            background: linear-gradient(to right, #004b99, #007BFF);
-            transform: translateY(-3px);
+        button:hover {
+            background-color: #0056b3;
         }
-
-        /* Responsive Design */
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 2rem;
-            }
-
-            p {
-                font-size: 1rem;
-            }
-
-            .button {
-                font-size: 0.9rem;
-                padding: 10px 20px;
-            }
-        }
-
-        /* Hidden sections */
-        #info-section, #game-section {
+        #info-section, #game-section, #username-setup-section {
             display: none;
         }
-
-        /* Game Section Styling */
         #response {
             margin-top: 20px;
             font-weight: bold;
         }
-
         ul {
             text-align: left;
             display: inline-block;
             max-width: 400px;
         }
+        h2 {
+            color: #0056b3;
+        }
+        .guidelines {
+            text-align: left;
+            display: inline-block;
+            margin: 10px auto;
+            max-width: 400px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        .guidelines h3 {
+            color: #007BFF;
+        }
+        .guidelines ul {
+            padding-left: 20px;
+        }
+        .guidelines li {
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
-    <!-- Introduction Page -->
-    <div id="intro-section" class="container">
-        <h1>10k Athletes Challenge</h1>
-        <div class="line"></div>
-        <p>
-            Think you're the ultimate sports fan? Prove it by naming as many current professional athletes as you can! 
-            Each correct name earns you 10 points. Climb the leaderboard and show the world you're the best!
-        </p>
-        <button class="button" id="google-login-button">Log In with Google</button>
+    <h1>10k Athletes Challenge</h1>
+
+    <!-- Login Section -->
+    <div id="login-section">
+        <p>Log in with Google to start:</p>
+        <button id="google-login-button">Log In with Google</button>
+    </div>
+
+    <!-- Username Setup Section -->
+    <div id="username-setup-section">
+        <h2>Set Up Your Username</h2>
+        <p>Please enter a unique username to associate with your account:</p>
+        <input type="text" id="username-input" placeholder="Enter your username" />
+        <button id="save-username-button">Save Username</button>
     </div>
 
     <!-- Info Section -->
-    <div id="info-section" class="container">
+    <div id="info-section">
         <h2>Welcome to the 10k Athletes Challenge!</h2>
         <p><em>Prove you're the ultimate sports fan by naming as many athletes as you can!</em></p>
         <div class="guidelines">
@@ -126,17 +95,17 @@
                 <li>Only <strong>current athletes</strong> are valid.</li>
             </ul>
         </div>
-        <button class="button" id="start-game-button">Start Challenge</button>
-        <button class="button" id="back-to-intro-button">Back to Intro</button>
+        <button id="start-game-button">Start Challenge</button>
+        <button id="back-to-login-button">Back to Login</button>
     </div>
 
     <!-- Game Section -->
-    <div id="game-section" class="container">
+    <div id="game-section">
         <p>Enter a professional athlete's name below:</p>
         <input type="text" id="athlete-name" placeholder="Enter athlete name..." />
-        <button class="button" id="submit-button">Submit</button>
-        <button class="button" id="reset-button">Reset</button>
-        <button class="button" id="back-to-info-button">Back to Info Page</button>
+        <button id="submit-button">Submit</button>
+        <button id="reset-button">Reset</button>
+        <button id="back-to-info-button">Back to Info Page</button>
         <p id="response"></p>
         <h2>Your Score: <span id="score">0</span></h2>
         <h3>Named Athletes:</h3>
@@ -175,18 +144,65 @@
 
                 const playerRef = ref(db, `players/${currentPlayer}`);
                 const snapshot = await get(playerRef);
+
                 if (!snapshot.exists()) {
-                    await set(playerRef, { score: 0, namedAthletes: [] });
+                    // If no data exists, prompt the user to create a username
+                    document.getElementById("login-section").style.display = "none";
+                    document.getElementById("username-setup-section").style.display = "block";
                 } else {
                     const data = snapshot.val();
-                    score = data.score || 0;
-                    namedAthletes = new Set(data.namedAthletes || []);
+                    if (!data.username) {
+                        // If the user has no username, prompt to set one
+                        document.getElementById("login-section").style.display = "none";
+                        document.getElementById("username-setup-section").style.display = "block";
+                    } else {
+                        // User already has a username, proceed to info section
+                        alert(`Welcome back, ${data.username}!`);
+                        document.getElementById("login-section").style.display = "none";
+                        document.getElementById("info-section").style.display = "block";
+                    }
                 }
-                document.getElementById("intro-section").style.display = "none";
-                document.getElementById("info-section").style.display = "block";
             } catch (error) {
                 console.error("Google login error:", error);
                 alert("Google login failed.");
+            }
+        });
+
+        // Save Username
+        document.getElementById("save-username-button").addEventListener("click", async () => {
+            const username = document.getElementById("username-input").value.trim();
+            if (!username) {
+                alert("Username cannot be empty.");
+                return;
+            }
+
+            const usernamesRef = ref(db, "usernames");
+            const snapshot = await get(usernamesRef);
+
+            const usernames = snapshot.val() || {};
+
+            if (Object.values(usernames).includes(username)) {
+                alert("This username is already taken. Please choose another one.");
+                return;
+            }
+
+            try {
+                // Save the username
+                await set(ref(db, `players/${currentPlayer}`), {
+                    username,
+                    score: 0,
+                    namedAthletes: [],
+                });
+
+                // Keep a mapping of usernames to ensure uniqueness
+                await set(ref(db, `usernames/${currentPlayer}`), username);
+
+                alert("Username saved successfully!");
+                document.getElementById("username-setup-section").style.display = "none";
+                document.getElementById("info-section").style.display = "block";
+            } catch (error) {
+                console.error("Error saving username:", error);
+                alert("Failed to save username.");
             }
         });
 
@@ -194,12 +210,6 @@
         document.getElementById("start-game-button").addEventListener("click", () => {
             document.getElementById("info-section").style.display = "none";
             document.getElementById("game-section").style.display = "block";
-        });
-
-        // Back to Intro
-        document.getElementById("back-to-intro-button").addEventListener("click", () => {
-            document.getElementById("info-section").style.display = "none";
-            document.getElementById("intro-section").style.display = "block";
         });
 
         // Back to Info
@@ -213,7 +223,7 @@
             const athleteName = document.getElementById("athlete-name").value.trim();
             const responseElement = document.getElementById("response");
 
-            if (!athleteName) {
+            if (athleteName === "") {
                 responseElement.textContent = "Please enter a name!";
                 responseElement.style.color = "red";
                 return;
@@ -241,38 +251,4 @@
                         await update(playerRef, { score, namedAthletes: Array.from(namedAthletes) });
 
                         responseElement.textContent = `${exactMatch.strPlayer} is valid!`;
-                        responseElement.style.color = "green";
-                        document.getElementById("athlete-name").value = ""; // Clear input
-                    } else {
-                        responseElement.textContent = `${athleteName} is invalid.`;
-                        responseElement.style.color = "orange";
-                    }
-                } else {
-                    responseElement.textContent = `${athleteName} is invalid.`;
-                    responseElement.style.color = "orange";
-                }
-            } catch (error) {
-                console.error("Error validating athlete:", error);
-                responseElement.textContent = "Error validating athlete.";
-                responseElement.style.color = "red";
-            }
-        });
-
-        // Reset Game
-        document.getElementById("reset-button").addEventListener("click", () => {
-            namedAthletes.clear();
-            score = 0;
-            document.getElementById("score").textContent = score;
-            document.getElementById("named-athletes").innerHTML = "";
-            document.getElementById("response").textContent = "Game reset!";
-        });
-
-        function addNamedAthleteToUI(name) {
-            const list = document.getElementById("named-athletes");
-            const listItem = document.createElement("li");
-            listItem.textContent = name;
-            list.appendChild(listItem);
-        }
-    </script>
-</body>
-</html>
+                       
