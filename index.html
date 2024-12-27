@@ -70,26 +70,8 @@
 
     <!-- Login Section -->
     <div id="login-section">
-        <p>Log in or register to start:</p>
-        <input type="text" id="player-username" placeholder="Enter your username" />
-        <input type="email" id="player-email" placeholder="Enter your email" />
-        <input type="password" id="player-password" placeholder="Enter your password" />
-        <button id="register-button">Register</button>
-        <button id="login-button">Log In</button>
-        <button id="forgot-password-button">Forgot Password</button>
+        <p>Log in with Google to start:</p>
         <button id="google-login-button">Log In with Google</button>
-
-        <!-- Email and Password Guidelines -->
-        <div class="guidelines">
-            <h3>Username, Email, and Password Guidelines:</h3>
-            <ul>
-                <li><strong>Username:</strong> Must be unique (e.g., sportsfan123).</li>
-                <li><strong>Email:</strong> Must be a valid email format (e.g., example@example.com).</li>
-                <li><strong>Password:</strong> Must be at least 6 characters long.</li>
-                <li>Passwords are case-sensitive (e.g., "Password123" ≠ "password123").</li>
-                <li>Include a mix of uppercase, lowercase, numbers, and special characters for stronger security.</li>
-            </ul>
-        </div>
     </div>
 
     <!-- Info Section -->
@@ -124,7 +106,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
         import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
 
         const firebaseConfig = {
@@ -145,56 +127,7 @@
         let score = 0;
         let namedAthletes = new Set();
 
-        document.getElementById("register-button").addEventListener("click", async () => {
-            const username = document.getElementById("player-username").value.trim();
-            const email = document.getElementById("player-email").value.trim();
-            const password = document.getElementById("player-password").value.trim();
-
-            if (!username || !email || !password) {
-                alert("Please enter a username, email, and password.");
-                return;
-            }
-
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                currentPlayer = userCredential.user.uid;
-                await set(ref(db, `players/${currentPlayer}`), { username, email, score: 0, namedAthletes: [] });
-                alert("Registration successful!");
-                document.getElementById("login-section").style.display = "none";
-                document.getElementById("info-section").style.display = "block";
-            } catch (error) {
-                console.error("Registration error:", error);
-                alert("Registration failed.");
-            }
-        });
-
-        document.getElementById("login-button").addEventListener("click", async () => {
-            const email = document.getElementById("player-email").value.trim();
-            const password = document.getElementById("player-password").value.trim();
-
-            if (!email || !password) {
-                alert("Please enter both email and password.");
-                return;
-            }
-
-            try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                currentPlayer = userCredential.user.uid;
-                const snapshot = await get(ref(db, `players/${currentPlayer}`));
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    score = data.score || 0;
-                    namedAthletes = new Set(data.namedAthletes || []);
-                }
-                alert("Login successful!");
-                document.getElementById("login-section").style.display = "none";
-                document.getElementById("info-section").style.display = "block";
-            } catch (error) {
-                console.error("Login error:", error);
-                alert("Login failed.");
-            }
-        });
-
+        // Google Login
         document.getElementById("google-login-button").addEventListener("click", async () => {
             const provider = new GoogleAuthProvider();
             try {
@@ -214,37 +147,25 @@
             }
         });
 
-        document.getElementById("forgot-password-button").addEventListener("click", async () => {
-            const email = document.getElementById("player-email").value.trim();
-            if (!email) {
-                alert("Please enter your email.");
-                return;
-            }
-
-            try {
-                await sendPasswordResetEmail(auth, email);
-                alert("Password reset email sent.");
-            } catch (error) {
-                console.error("Password reset error:", error);
-                alert("Failed to send password reset email.");
-            }
-        });
-
+        // Start Game
         document.getElementById("start-game-button").addEventListener("click", () => {
             document.getElementById("info-section").style.display = "none";
             document.getElementById("game-section").style.display = "block";
         });
 
+        // Back to Login
         document.getElementById("back-to-login-button").addEventListener("click", () => {
             document.getElementById("info-section").style.display = "none";
             document.getElementById("login-section").style.display = "block";
         });
 
+        // Back to Info
         document.getElementById("back-to-info-button").addEventListener("click", () => {
             document.getElementById("game-section").style.display = "none";
             document.getElementById("info-section").style.display = "block";
         });
 
+        // Submit Athlete
         document.getElementById("submit-button").addEventListener("click", async () => {
             const athleteName = document.getElementById("athlete-name").value.trim();
             const responseElement = document.getElementById("response");
