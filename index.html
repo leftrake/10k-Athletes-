@@ -251,4 +251,38 @@
                         await update(playerRef, { score, namedAthletes: Array.from(namedAthletes) });
 
                         responseElement.textContent = `${exactMatch.strPlayer} is valid!`;
-                       
+                        responseElement.style.color = "green";
+                        document.getElementById("athlete-name").value = ""; // Clear input
+                    } else {
+                        responseElement.textContent = `${athleteName} is invalid.`;
+                        responseElement.style.color = "orange";
+                    }
+                } else {
+                    responseElement.textContent = `${athleteName} is invalid.`;
+                    responseElement.style.color = "orange";
+                }
+            } catch (error) {
+                console.error("Error validating athlete:", error);
+                responseElement.textContent = "Error validating athlete.";
+                responseElement.style.color = "red";
+            }
+        });
+
+        // Reset Game
+        document.getElementById("reset-button").addEventListener("click", () => {
+            namedAthletes.clear();
+            score = 0;
+            document.getElementById("score").textContent = score;
+            document.getElementById("named-athletes").innerHTML = "";
+            document.getElementById("response").textContent = "Game reset!";
+        });
+
+        function addNamedAthleteToUI(name) {
+            const list = document.getElementById("named-athletes");
+            const listItem = document.createElement("li");
+            listItem.textContent = name;
+            list.appendChild(listItem);
+        }
+    </script>
+</body>
+</html>
