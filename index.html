@@ -84,7 +84,7 @@
         }
 
         /* Hidden sections */
-        #info-section, #game-section {
+        #info-section, #game-section, #username-section {
             display: none;
         }
 
@@ -110,6 +110,14 @@
             Each correct name earns you 10 points. Climb the leaderboard and show the world you're the best!
         </p>
         <button class="button" id="google-login-button">Log In with Google</button>
+    </div>
+
+    <!-- Username Section -->
+    <div id="username-section" class="container">
+        <h2>Set Your Username</h2>
+        <p>Your account needs a unique username to participate in the challenge!</p>
+        <input type="text" id="username-input" placeholder="Enter a unique username" />
+        <button class="button" id="save-username-button">Save Username</button>
     </div>
 
     <!-- Info Section -->
@@ -162,6 +170,7 @@
         const db = getDatabase(app);
 
         let currentPlayer = "";
+        let username = "";
         let score = 0;
         let namedAthletes = new Set();
 
@@ -175,18 +184,34 @@
                 const playerRef = ref(db, `players/${currentPlayer}`);
                 const snapshot = await get(playerRef);
                 if (!snapshot.exists()) {
-                    await set(playerRef, { score: 0, namedAthletes: [] });
+                    // Prompt user to set a username if the account doesn't exist
+                    document.getElementById("intro-section").style.display = "none";
+                    document.getElementById("username-section").style.display = "block";
                 } else {
                     const data = snapshot.val();
+                    username = data.username || "";
                     score = data.score || 0;
                     namedAthletes = new Set(data.namedAthletes || []);
+                    document.getElementById("intro-section").style.display = "none";
+                    document.getElementById("info-section").style.display = "block";
                 }
-                document.getElementById("intro-section").style.display = "none";
-                document.getElementById("info-section").style.display = "block";
             } catch (error) {
                 console.error("Google login error:", error);
                 alert("Google login failed.");
             }
+        });
+
+        // Save Username
+        document.getElementById("save-username-button").addEventListener("click", async () => {
+            username = document.getElementById("username-input").value.trim();
+            if (!username) {
+                alert("Please enter a valid username.");
+                return;
+            }
+            const playerRef = ref(db, `players/${currentPlayer}`);
+            await set(playerRef, { username, score: 0, namedAthletes: [] });
+            document.getElementById("username-section").style.display = "none";
+            document.getElementById("info-section").style.display = "block";
         });
 
         // Start Game
@@ -237,7 +262,7 @@
                         addNamedAthleteToUI(exactMatch.strPlayer);
 
                         const playerRef = ref(db, `players/${currentPlayer}`);
-                        await update(playerRef, { score, namedAthletes: Array.from(namedAthletes) });
+                        await update(playerRef, { username, score, namedAthletes: Array.from(namedAthletes) });
 
                         responseElement.textContent = `${exactMatch.strPlayer} is valid!`;
                         responseElement.style.color = "green";
